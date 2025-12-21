@@ -1,0 +1,39 @@
+# ローカルデータディレクトリを除外
+local-data/
+local_data/
+
+# Gitディレクトリを除外
+.git/
+.gitignore
+
+# Python関連
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# 仮想環境
+venv/
+env/
+ENV/
+
+# IDE設定
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS生成ファイル
+.DS_Store
+Thumbs.db
+
+# データベースファイル
+*.sqlite3
+db.sqlite3
+
+# ログファイル
+*.log

@@ -1,0 +1,63 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}会社削除確認 - 企業管理{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">会社削除確認</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i>
+            以下の会社を削除してもよろしいですか？この操作は取り消せません。
+        </div>
+
+        {% if user_count > 0 %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-circle"></i>
+            <strong>警告:</strong> この会社には {{ user_count }} 人のユーザーが所属しています。
+            会社を削除すると、所属するすべてのユーザーも削除されます。
+        </div>
+        {% endif %}
+
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th style="width: 200px;">会社ID</th>
+                    <td>{{ company.company_id }}</td>
+                </tr>
+                <tr>
+                    <th>会社名</th>
+                    <td>{{ company.name }}</td>
+                </tr>
+                <tr>
+                    <th>住所</th>
+                    <td>{{ company.address }}</td>
+                </tr>
+                <tr>
+                    <th>電話番号</th>
+                    <td>{{ company.tel }}</td>
+                </tr>
+                <tr>
+                    <th>所属ユーザー数</th>
+                    <td>
+                        <span class="badge bg-warning">{{ user_count }} 人</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'company_list' %}" class="btn btn-secondary">キャンセル</a>
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> 削除する
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

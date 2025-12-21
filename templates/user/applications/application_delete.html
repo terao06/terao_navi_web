@@ -1,0 +1,51 @@
+{% extends "user/base.html" %}
+{% load static %}
+
+{% block title %}アプリケーション削除確認{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>アプリケーション削除確認</h2>
+        <a href="{% url 'application_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> 一覧に戻る
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                以下のアプリケーションを削除してもよろしいですか？この操作は取り消せません。
+            </div>
+
+            <table class="table table-bordered">
+                <tr>
+                    <th style="width: 200px;">アプリケーション名</th>
+                    <td>{{ application.application_name }}</td>
+                </tr>
+                <tr>
+                    <th>説明</th>
+                    <td>{{ application.description|linebreaksbr|default:"未設定" }}</td>
+                </tr>
+                <tr>
+                    <th>登録日時</th>
+                    <td>{{ application.created_at|date:"Y年m月d日 H:i:s" }}</td>
+                </tr>
+            </table>
+
+            <form method="post" class="mt-3">
+                {% csrf_token %}
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> 削除する
+                    </button>
+                    <a href="{% url 'application_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> キャンセル
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

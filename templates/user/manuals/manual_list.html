@@ -1,0 +1,81 @@
+{% extends "user/base.html" %}
+{% load static %}
+
+{% block title %}マニュアル一覧{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>マニュアル一覧</h2>
+    {% if current_user.role_id != 3 %}
+    <a href="{% url 'manual_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 新規登録
+    </a>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>マニュアル名</th>
+                        <th>アプリケーション</th>
+                        <th>説明</th>
+                        <th>ファイルサイズ</th>
+                        <th>登録日時</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for manual in manuals %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'manual_detail' manual.manual_id %}">
+                                <i class="bi bi-file-earmark-pdf"></i> {{ manual.manual_name }}
+                            </a>
+                        </td>
+                        <td>{{ manual.application.application_name }}</td>
+                        <td>{{ manual.description|truncatewords:10 }}</td>
+                        <td>
+                            {% if manual.file_size %}
+                                {% if manual.file_size < 1024 %}
+                                    {{ manual.file_size }} B
+                                {% elif manual.file_size < 1048576 %}
+                                    {{ manual.file_size|filesizeformat }}
+                                {% else %}
+                                    {{ manual.file_size|filesizeformat }}
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ manual.created_at|date:"Y年m月d日 H:i" }}</td>
+                        <td>
+                            <a href="{% url 'manual_detail' manual.manual_id %}" 
+                               class="btn btn-sm btn-info" title="詳細">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if current_user.role_id != 3 %}
+                            <a href="{% url 'manual_edit' manual.manual_id %}" 
+                               class="btn btn-sm btn-warning" title="編集">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'manual_delete' manual.manual_id %}" 
+                               class="btn btn-sm btn-danger" title="削除">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">登録されているマニュアルはありません。</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

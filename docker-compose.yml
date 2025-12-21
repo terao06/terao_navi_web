@@ -1,0 +1,103 @@
+services:
+  navi_admin_db:
+    image: navi_admin_db:local
+    container_name: navi_admin_db
+    build:
+      context: .
+      dockerfile: ./local_setting/local_db/Dockerfile
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - 33307:3306
+    volumes:
+      - ./local_data/mysql:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=db_local
+      - MYSQL_USER=navi_admin_user
+      - MYSQL_PASSWORD=password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - navi_admin_network
+
+  navi_admin_web:
+    image: navi_admin_web:local
+    container_name: navi_admin_web
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: ./docker/local/Dockerfile
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        while ! nc -z navi_admin_db 3306; do
+          sleep 1
+        done &&
+        echo 'Database is ready!' &&
+        python manage.py runserver 0.0.0.0:8004
+      "
+    volumes:
+      - .:/app
+    ports:
+      - 8004:8004
+    environment:
+      - DJANGO_SETTINGS_MODULE=terao_navi_web.settings
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      navi_admin_db:
+        condition: service_healthy
+    networks:
+      - navi_admin_network
+    restart: unless-stopped
+  
+  navi_admin_s3:
+    image: minio/minio
+    container_name: navi_admin_s3
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./local_data/minio:/data
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    networks:
+      - navi_admin_network
+    restart: always
+
+  minio_init:
+    image: minio/mc
+    depends_on:
+      - navi_admin_s3
+    entrypoint: >
+      sh -c "/init/create_bucket.sh"
+    volumes:
+      - ./local_setting/local_s3:/init
+    networks:
+      - navi_admin_network
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8013:80"
+    environment:
+      PMA_HOST: navi_admin_db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: rootpassword
+    networks:
+      - navi_admin_network
+    depends_on:
+      navi_admin_db:
+        condition: service_healthy
+    restart: always
+
+networks:
+  navi_admin_network:
+    driver: bridge
+
+volumes:
+  minio_data:

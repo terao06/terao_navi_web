@@ -1,0 +1,60 @@
+{% extends 'user/base.html' %}
+
+{% block title %}ユーザー削除確認{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>ユーザー削除確認</h2>
+    <a href="{% url 'general_user_list' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> 一覧に戻る
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="alert alert-warning" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            以下のユーザーを削除してもよろしいですか？この操作は取り消せません。
+        </div>
+
+        <table class="table table-bordered">
+            <tr>
+                <th style="width: 200px;">ユーザー名</th>
+                <td>{{ user.username }}</td>
+            </tr>
+            <tr>
+                <th>氏名</th>
+                <td>{{ user.full_name }}</td>
+            </tr>
+            <tr>
+                <th>メールアドレス</th>
+                <td>{{ user.email }}</td>
+            </tr>
+            <tr>
+                <th>ロール</th>
+                <td>
+                    {% if user.role_id == 1 %}
+                        <span class="badge bg-danger">全権限</span>
+                    {% elif user.role_id == 2 %}
+                        <span class="badge bg-warning">制限付き</span>
+                    {% elif user.role_id == 3 %}
+                        <span class="badge bg-secondary">閲覧のみ</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+
+        <form method="post" class="mt-3">
+            {% csrf_token %}
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> 削除する
+                </button>
+                <a href="{% url 'general_user_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> キャンセル
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

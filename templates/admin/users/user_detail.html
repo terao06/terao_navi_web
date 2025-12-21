@@ -1,0 +1,102 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}ユーザー詳細 - ユーザー管理{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">ユーザー詳細</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'user_edit' user.user_id %}" class="btn btn-primary me-2">
+            <i class="bi bi-pencil"></i> 編集
+        </a>
+        <a href="{% url 'user_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 一覧に戻る
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th style="width: 200px;">ユーザーID</th>
+                    <td>{{ user.user_id }}</td>
+                </tr>
+                <tr>
+                    <th>ユーザー名</th>
+                    <td>{{ user.username }}</td>
+                </tr>
+                <tr>
+                    <th>氏名</th>
+                    <td>{{ user.full_name }}</td>
+                </tr>
+                <tr>
+                    <th>メールアドレス</th>
+                    <td>{{ user.email }}</td>
+                </tr>
+                <tr>
+                    <th>会社</th>
+                    <td>{{ user.company.name }}</td>
+                </tr>
+                <tr>
+                    <th>ロール</th>
+                    <td>
+                        {% if user.role_id == 1 %}
+                            <span class="badge bg-danger">全権限付与</span>
+                        {% elif user.role_id == 2 %}
+                            <span class="badge bg-warning">制限された範囲内で登録更新が可能</span>
+                        {% elif user.role_id == 3 %}
+                            <span class="badge bg-secondary">閲覧権限のみ</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>状態</th>
+                    <td>
+                        {% if user.is_active %}
+                            <span class="badge bg-success">有効</span>
+                        {% else %}
+                            <span class="badge bg-secondary">無効</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>作成日時</th>
+                    <td>{{ user.created_at|date:"Y-m-d H:i:s" }}</td>
+                </tr>
+                <tr>
+                    <th>更新日時</th>
+                    <td>{{ user.updated_at|date:"Y-m-d H:i:s" }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="mt-3">
+            <h5>会社情報</h5>
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <th style="width: 200px;">会社名</th>
+                        <td>{{ user.company.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>住所</th>
+                        <td>{{ user.company.address }}</td>
+                    </tr>
+                    <tr>
+                        <th>電話番号</th>
+                        <td>{{ user.company.tel }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'user_delete' user.user_id %}" class="btn btn-danger">
+        <i class="bi bi-trash"></i> 削除
+    </a>
+</div>
+{% endblock %}

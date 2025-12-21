@@ -1,0 +1,65 @@
+{% extends "user/base.html" %}
+{% load static %}
+
+{% block title %}アプリケーション一覧{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>アプリケーション一覧</h2>
+    {% if current_user.role_id != 3 %}
+    <a href="{% url 'application_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 新規登録
+    </a>
+    {% endif %}
+</div>
+
+<div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>アプリケーション名</th>
+                            <th>説明</th>
+                            <th>登録日時</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in applications %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'application_detail' application.application_id %}">
+                                    {{ application.application_name }}
+                                </a>
+                            </td>
+                            <td>{{ application.description|truncatewords:10 }}</td>
+                            <td>{{ application.created_at|date:"Y年m月d日 H:i" }}</td>
+                            <td>
+                                <a href="{% url 'application_detail' application.application_id %}" 
+                                   class="btn btn-sm btn-info" title="詳細">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if current_user.role_id != 3 %}
+                                <a href="{% url 'application_edit' application.application_id %}" 
+                                   class="btn btn-sm btn-warning" title="編集">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'application_delete' application.application_id %}" 
+                                   class="btn btn-sm btn-danger" title="削除">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">登録されているアプリケーションはありません。</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

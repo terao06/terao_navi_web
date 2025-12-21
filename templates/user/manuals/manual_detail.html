@@ -1,0 +1,216 @@
+{% extends "user/base.html" %}
+{% load static %}
+
+{% block title %}マニュアル詳細{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>マニュアル詳細</h2>
+    <div>
+        {% if current_user.role_id != 3 %}
+        <a href="{% url 'manual_edit' manual.manual_id %}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> 編集
+        </a>
+        <a href="{% url 'manual_delete' manual.manual_id %}" class="btn btn-danger">
+            <i class="bi bi-trash"></i> 削除
+        </a>
+        {% endif %}
+        <a href="{% url 'manual_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> 一覧に戻る
+        </a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr>
+                <th style="width: 200px;">マニュアル名</th>
+                <td>{{ manual.manual_name }}</td>
+            </tr>
+            <tr>
+                <th>アプリケーション</th>
+                <td>{{ manual.application.application_name }}</td>
+            </tr>
+            <tr>
+                <th>説明</th>
+                <td>{{ manual.description|linebreaksbr|default:"未設定" }}</td>
+            </tr>
+            <tr>
+                <th>ファイルサイズ</th>
+                <td>{{ manual.file_size|filesizeformat }}</td>
+            </tr>
+            <tr>
+                <th>登録日時</th>
+                <td>{{ manual.created_at|date:"Y年m月d日 H:i:s" }}</td>
+            </tr>
+            <tr>
+                <th>更新日時</th>
+                <td>{{ manual.updated_at|date:"Y年m月d日 H:i:s" }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">プレビュー</h5>
+    </div>
+    <div class="card-body p-0">
+        <div id="pdf-container" style="width: 100%; height: 900px; overflow: auto; background-color: #525659; display: flex; align-items: center; justify-content: center;">
+            <canvas id="pdf-canvas" style="display: block;"></canvas>
+        </div>
+        <div class="p-3 border-top">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <button id="prev-page" class="btn btn-sm btn-secondary">
+                        <i class="bi bi-chevron-left"></i> 前のページ
+                    </button>
+                    <span class="mx-2">
+                        <span id="page-num"></span> / <span id="page-count"></span>
+                    </span>
+                    <button id="next-page" class="btn btn-sm btn-secondary">
+                        次のページ <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+                <div>
+                    <button id="zoom-out" class="btn btn-sm btn-secondary">
+                        <i class="bi bi-zoom-out"></i>
+                    </button>
+                    <span class="mx-2"><span id="zoom-level">100</span>%</span>
+                    <button id="zoom-in" class="btn btn-sm btn-secondary">
+                        <i class="bi bi-zoom-in"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+    // PDF.jsの設定
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const url = '{% url "manual_preview" manual.manual_id %}';
+    let pdfDoc = null;
+    let pageNum = 1;
+    let pageRendering = false;
+    let pageNumPending = null;
+    let scale = 1.5;
+    let baseScale = 1.0; // 基準スケール（コンテナ幅に合わせた値）
+    let zoomLevel = 100; // ズームレベル（%）
+
+    const canvas = document.getElementById('pdf-canvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('pdf-container');
+
+    // コンテナの高さを画面サイズに応じて調整
+    function adjustContainerHeight() {
+        const windowHeight = window.innerHeight;
+        const containerTop = container.getBoundingClientRect().top;
+        const maxHeight = windowHeight - containerTop - 150; // 下部の余白を考慮
+        container.style.height = Math.max(600, Math.min(maxHeight, 900)) + 'px';
+    }
+
+    // 初回とリサイズ時に高さを調整
+    adjustContainerHeight();
+    window.addEventListener('resize', adjustContainerHeight);
+
+    // PDFページをレンダリング
+    function renderPage(num) {
+        pageRendering = true;
+        pdfDoc.getPage(num).then(function(page) {
+            // コンテナの幅と高さに合わせてスケールを計算
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            const viewport = page.getViewport({scale: 1});
+            
+            // 幅と高さの両方を考慮して、小さい方のスケールを採用
+            const scaleWidth = (containerWidth * 0.95) / viewport.width;
+            const scaleHeight = (containerHeight * 0.95) / viewport.height;
+            const calculatedScale = Math.min(scaleWidth, scaleHeight);
+            
+            baseScale = calculatedScale;
+            scale = baseScale * (zoomLevel / 100);
+            
+            const scaledViewport = page.getViewport({scale: scale});
+            canvas.height = scaledViewport.height;
+            canvas.width = scaledViewport.width;
+
+            const renderContext = {
+                canvasContext: ctx,
+                viewport: scaledViewport
+            };
+
+            const renderTask = page.render(renderContext);
+            renderTask.promise.then(function() {
+                pageRendering = false;
+                if (pageNumPending !== null) {
+                    renderPage(pageNumPending);
+                    pageNumPending = null;
+                }
+            });
+        });
+
+        document.getElementById('page-num').textContent = num;
+    }
+
+    // ページレンダリングをキューに入れる
+    function queueRenderPage(num) {
+        if (pageRendering) {
+            pageNumPending = num;
+        } else {
+            renderPage(num);
+        }
+    }
+
+    // 前のページ
+    function onPrevPage() {
+        if (pageNum <= 1) {
+            return;
+        }
+        pageNum--;
+        queueRenderPage(pageNum);
+    }
+    document.getElementById('prev-page').addEventListener('click', onPrevPage);
+
+    // 次のページ
+    function onNextPage() {
+        if (pageNum >= pdfDoc.numPages) {
+            return;
+        }
+        pageNum++;
+        queueRenderPage(pageNum);
+    }
+    document.getElementById('next-page').addEventListener('click', onNextPage);
+
+    // ズームイン
+    document.getElementById('zoom-in').addEventListener('click', function() {
+        zoomLevel += 25;
+        document.getElementById('zoom-level').textContent = zoomLevel;
+        queueRenderPage(pageNum);
+    });
+
+    // ズームアウト
+    document.getElementById('zoom-out').addEventListener('click', function() {
+        if (zoomLevel > 50) {
+            zoomLevel -= 25;
+            document.getElementById('zoom-level').textContent = zoomLevel;
+            queueRenderPage(pageNum);
+        }
+    });
+
+    // PDFを読み込み
+    pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
+        pdfDoc = pdfDoc_;
+        document.getElementById('page-count').textContent = pdfDoc.numPages;
+        document.getElementById('zoom-level').textContent = zoomLevel;
+        renderPage(pageNum);
+    }).catch(function(error) {
+        console.error('PDFの読み込みに失敗しました:', error);
+        document.getElementById('pdf-container').innerHTML = 
+            '<div class="alert alert-danger m-3">PDFの読み込みに失敗しました。</div>';
+    });
+</script>
+{% endblock %}

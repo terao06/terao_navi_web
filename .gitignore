@@ -1,0 +1,83 @@
+############################
+# Python
+############################
+__pycache__/
+*.py[cod]
+*$py.class
+
+############################
+# Virtual Environment
+############################
+.venv/
+venv/
+ENV/
+env/
+.env/
+.env.*
+
+############################
+# Packaging / Build
+############################
+build/
+dist/
+*.egg-info/
+.eggs/
+
+############################
+# Test / Coverage
+############################
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+############################
+# Logs / Runtime files
+############################
+*.log
+logs/
+tmp/
+*.pid
+
+############################
+# Django
+############################
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+local_data/
+*/migrations/*
+!.gitkeep
+
+############################
+# Jupyter Notebook
+############################
+.ipynb_checkpoints/
+
+############################
+# IDE / Editor
+############################
+.vscode/
+.idea/
+*.swp
+*.swo
+
+############################
+# OS
+############################
+.DS_Store
+Thumbs.db
+
+############################
+# Docker
+############################
+docker-compose.override.yml
+
+############################
+# Local settings
+############################
+local_settings.py
+settings_local.py

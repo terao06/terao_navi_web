@@ -1,0 +1,105 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}ユーザー一覧 - ユーザー管理{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">ユーザー一覧</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'user_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> 新規作成
+        </a>
+    </div>
+</div>
+
+<!-- 検索フォーム -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <input type="text" name="q" class="form-control" placeholder="ユーザー名、メールアドレスで検索" value="{{ query }}">
+            </div>
+            <div class="col-md-4">
+                <select name="company" class="form-control">
+                    <option value="">すべての会社</option>
+                    {% for company in companies %}
+                        <option value="{{ company.company_id }}" {% if company_filter == company.company_id|stringformat:"s" %}selected{% endif %}>
+                            {{ company.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary w-100">
+                    <i class="bi bi-search"></i> 検索
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ユーザーテーブル -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>ユーザー名</th>
+                        <th>氏名</th>
+                        <th>メールアドレス</th>
+                        <th>会社</th>
+                        <th>ロール</th>
+                        <th>状態</th>
+                        <th>作成日時</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.user_id }}</td>
+                        <td>
+                            <a href="{% url 'user_detail' user.user_id %}">{{ user.username }}</a>
+                        </td>
+                        <td>{{ user.full_name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.company.name }}</td>
+                        <td>
+                            {% if user.role_id == 1 %}
+                                <span class="badge bg-danger">全権限</span>
+                            {% elif user.role_id == 2 %}
+                                <span class="badge bg-warning">制限付き</span>
+                            {% elif user.role_id == 3 %}
+                                <span class="badge bg-secondary">閲覧のみ</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.is_active %}
+                                <span class="badge bg-success">有効</span>
+                            {% else %}
+                                <span class="badge bg-secondary">無効</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            <a href="{% url 'user_edit' user.user_id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'user_delete' user.user_id %}" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">ユーザーが見つかりません</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
