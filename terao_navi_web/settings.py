@@ -161,3 +161,10 @@ AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', 'manuals')
 AWS_S3_USE_SSL = os.getenv('AWS_S3_USE_SSL', 'False') == 'True'
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
+
+# DynamoDB Settings (DynamoDB Local for local)
+DYNAMODB_ENDPOINT_URL = os.getenv('DYNAMODB_ENDPOINT_URL', 'http://navi-dynamodb:8000')
+DYNAMODB_REGION_NAME = os.getenv('DYNAMODB_REGION_NAME', 'ap-northeast-1')
+DYNAMODB_ACCESS_KEY_ID = os.getenv('DYNAMODB_ACCESS_KEY_ID', 'dummy')
+DYNAMODB_SECRET_ACCESS_KEY = os.getenv('DYNAMODB_SECRET_ACCESS_KEY', 'dummy')
+DYNAMODB_TABLE_PREFIX = os.getenv('DYNAMODB_TABLE_PREFIX', '')

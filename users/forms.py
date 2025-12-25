@@ -46,9 +46,11 @@ class UserForm(forms.ModelForm):
             if user_role_id == Role.FULL_ACCESS:
                 # role_id=1: 2と3のみ登録可能
                 self.fields['role'].queryset = Role.objects.filter(role_id__in=[Role.LIMITED_ACCESS, Role.READ_ONLY])
+                self.fields['role'].initial = Role.LIMITED_ACCESS
             elif user_role_id == Role.LIMITED_ACCESS:
                 # role_id=2: 3のみ登録可能
                 self.fields['role'].queryset = Role.objects.filter(role_id=Role.READ_ONLY)
+                self.fields['role'].initial = Role.READ_ONLY
             else:
                 # role_id=3: 登録不可
                 self.fields['role'].queryset = Role.objects.none()

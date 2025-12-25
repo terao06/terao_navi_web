@@ -7,4 +7,6 @@ urlpatterns = [
     path('<int:company_id>/', views.company_detail, name='company_detail'),
     path('<int:company_id>/edit/', views.company_edit, name='company_edit'),
     path('<int:company_id>/delete/', views.company_delete, name='company_delete'),
+    path('<int:company_id>/credentials/download/', views.company_credentials_download, name='company_credentials_download'),
+    path('<int:company_id>/credentials/json/', views.company_credentials_json, name='company_credentials_json'),
 ]

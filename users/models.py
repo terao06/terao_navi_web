@@ -12,8 +12,8 @@ class Role(models.Model):
     
     ROLE_CHOICES = [
         (FULL_ACCESS, '全権限付与'),
-        (LIMITED_ACCESS, '制限された範囲内で登録更新が可能'),
-        (READ_ONLY, '閲覧権限のみ'),
+        (LIMITED_ACCESS, '閲覧・編集権限'),
+        (READ_ONLY, '閲覧権限'),
     ]
     
     role_id = models.IntegerField(primary_key=True, choices=ROLE_CHOICES)
