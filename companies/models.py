@@ -22,6 +22,7 @@ class Company(models.Model):
     name = models.CharField(max_length=255, verbose_name='会社名')
     address = models.CharField(max_length=255, verbose_name='住所')
     tel = models.CharField(max_length=255, verbose_name='電話番号')
+    home_page = models.CharField(max_length=255, verbose_name='会社ホームページ')
     is_deleted = models.BooleanField(default=False, verbose_name='削除フラグ')
     deleted_at = models.DateTimeField(null=True, blank=True, verbose_name='削除日時')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='作成日時')

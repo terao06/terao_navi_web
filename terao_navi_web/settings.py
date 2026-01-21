@@ -28,6 +28,22 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# CSRF Settings
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8004',
+    'http://127.0.0.1:8004',
+]
+
+# CSRF Cookie Settings
+CSRF_COOKIE_SECURE = False  # 開発環境ではHTTPを許可
+CSRF_COOKIE_HTTPONLY = False  # JavaScriptからのアクセスを許可（デバッグ用）
+CSRF_COOKIE_SAMESITE = 'Lax'  # クロスサイトリクエストでの送信を制限
+
+# Session Cookie Settings  
+SESSION_COOKIE_SECURE = False  # 開発環境ではHTTPを許可
+SESSION_COOKIE_HTTPONLY = True  
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 86400  # 24時間
 
 # Application definition
 
@@ -42,6 +58,7 @@ INSTALLED_APPS = [
     'users',
     'applications',
     'manuals',
+    'tags',
 ]
 
 MIDDLEWARE = [
@@ -161,10 +178,3 @@ AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', 'manuals')
 AWS_S3_USE_SSL = os.getenv('AWS_S3_USE_SSL', 'False') == 'True'
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
-
-# DynamoDB Settings (DynamoDB Local for local)
-DYNAMODB_ENDPOINT_URL = os.getenv('DYNAMODB_ENDPOINT_URL', 'http://navi-dynamodb:8000')
-DYNAMODB_REGION_NAME = os.getenv('DYNAMODB_REGION_NAME', 'ap-northeast-1')
-DYNAMODB_ACCESS_KEY_ID = os.getenv('DYNAMODB_ACCESS_KEY_ID', 'dummy')
-DYNAMODB_SECRET_ACCESS_KEY = os.getenv('DYNAMODB_SECRET_ACCESS_KEY', 'dummy')
-DYNAMODB_TABLE_PREFIX = os.getenv('DYNAMODB_TABLE_PREFIX', '')

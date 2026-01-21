@@ -38,6 +38,7 @@
                         <th>ID</th>
                         <th>会社名</th>
                         <th>住所</th>
+                        <th>会社ホームページ</th>
                         <th>電話番号</th>
                         <th>ユーザー数</th>
                         <th>作成日時</th>
@@ -52,6 +53,7 @@
                             <a href="{% url 'company_detail' company.company_id %}">{{ company.name }}</a>
                         </td>
                         <td>{{ company.address }}</td>
+                        <td>{{ company.home_page }}</td>
                         <td>{{ company.tel }}</td>
                         <td>
                             <span class="badge bg-info">{{ company.user_count }}</span>

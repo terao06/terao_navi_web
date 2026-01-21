@@ -31,6 +31,7 @@ urlpatterns = [
     path('user/users/', include(user_urlpatterns)),  # 一般ユーザー用のユーザー管理
     path('user/applications/', include('applications.urls')),  # アプリケーション管理
     path('user/manuals/', include('manuals.urls')),  # マニュアル管理
+    path('user/tags/', include('tags.urls')),  # スクリプトタグ生成
     # Django Admin（カスタム管理画面へリダイレクト）
     path('admin/', views.admin_redirect, name='admin_redirect'),
     # カスタム管理画面（スーパーユーザー用）

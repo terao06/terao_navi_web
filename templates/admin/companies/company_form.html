@@ -40,6 +40,14 @@
             </div>
 
             <div class="mb-3">
+                <label for="{{ form.home_page.id_for_label }}" class="form-label">{{ form.home_page.label }} <span class="text-danger">*</span></label>
+                {{ form.home_page }}
+                {% if form.home_page.errors %}
+                    <div class="text-danger">{{ form.home_page.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
                 <label for="{{ form.tel.id_for_label }}" class="form-label">{{ form.tel.label }} <span class="text-danger">*</span></label>
                 {{ form.tel }}
                 {% if form.tel.errors %}

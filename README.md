@@ -61,6 +61,10 @@ docker-compose up -d --build
 ### 3. データベースのマイグレーション
 
 初回起動時、またはモデル変更後にマイグレーションを実行します：
+マイグレーションファイル作成
+```powershell
+docker-compose exec navi_admin_web python manage.py makemigrations
+```
 
 ```powershell
 docker-compose exec navi_admin_web python manage.py migrate
