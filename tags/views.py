@@ -1,8 +1,6 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib import messages
-from applications.models import Application
 from .forms import ScriptTagForm
-import base64
 
 
 def require_user_authentication(view_func):
@@ -41,8 +39,8 @@ def generate_script_tag(request):
         form = ScriptTagForm(request.POST)
         
         if form.is_valid():
-            # Base64エンコードされた認証情報を生成（company_idを使用）
-            credential = base64.b64encode(f"{current_user.company_id}".encode()).decode()
+            # company_idを取得
+            company_id = current_user.company_id
             
             chat_title = form.cleaned_data['chat_title']
             chat_color = form.cleaned_data['chat_color']
@@ -50,23 +48,23 @@ def generate_script_tag(request):
             # スクリプトタグを生成
             generated_tag = f'''<script
   src="http://localhost:3000/chat.js"
-  data-credential="{credential}"
+  data-company-id="{company_id}"
   data-chat-title="{chat_title}"
   data-chat-color="{chat_color}"
 ></script>'''
     else:
         form = ScriptTagForm()
-        credential = None
+        company_id = None
         chat_title = None
         chat_color = None
     
     # プレビュー用のパラメータを渡す
     if request.method == 'POST' and form.is_valid():
-        credential = base64.b64encode(f"{current_user.company_id}".encode()).decode()
+        company_id = current_user.company_id
         chat_title = form.cleaned_data['chat_title']
         chat_color = form.cleaned_data['chat_color']
     else:
-        credential = None
+        company_id = None
         chat_title = None
         chat_color = None
     
@@ -74,7 +72,7 @@ def generate_script_tag(request):
         'form': form,
         'generated_tag': generated_tag,
         'current_user': current_user,
-        'credential': credential,
+        'company_id': company_id,
         'chat_title': chat_title,
         'chat_color': chat_color,
     })

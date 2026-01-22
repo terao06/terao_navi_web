@@ -26,9 +26,11 @@ terao_navi_web/
 ├── applications/          # アプリケーション管理モジュール
 ├── companies/             # 企業管理モジュール
 ├── manuals/              # マニュアル管理モジュール
+├── tags/                 # タグ管理モジュール
 ├── users/                # ユーザー管理モジュール
 ├── terao_navi_web/      # プロジェクト設定
 ├── templates/            # HTMLテンプレート
+├── docs/                 # 画面操作ドキュメント
 ├── docker/               # Dockerファイル
 ├── local_setting/        # ローカル開発用設定
 ├── local_data/           # ローカルデータ保存用
@@ -198,10 +200,3 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
-## ライセンス
-
-[ライセンス情報を記載]
-
-## 連絡先
-
-[連絡先情報を記載]

@@ -167,15 +167,15 @@ function copyToClipboard() {
 // 実際のチャットウィジェットをプレビュー表示
 document.addEventListener('DOMContentLoaded', function() {
     const previewContainer = document.getElementById('chatPreview');
-    const credential = '{{ credential|escapejs }}';
+    const companyId = '{{ company_id|escapejs }}';
     const chatTitle = '{{ chat_title|escapejs }}';
     const chatColor = '{{ chat_color|escapejs }}';
     
-    if (previewContainer && credential && chatTitle && chatColor) {
+    if (previewContainer && companyId && chatTitle && chatColor) {
         // プレビュー用のスクリプトタグを動的に作成
         const script = document.createElement('script');
         script.src = 'http://localhost:3000/chat.js';
-        script.setAttribute('data-credential', credential);
+        script.setAttribute('data-company-id', companyId);
         script.setAttribute('data-chat-title', chatTitle);
         script.setAttribute('data-chat-color', chatColor);
         script.setAttribute('data-preview', 'true');
