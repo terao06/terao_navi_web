@@ -185,29 +185,6 @@ MinIO（navi-admin-s3）:
 
 これらのディレクトリは `.gitignore` に含めることを推奨します。
 
-### トラブルシューティング
-
-ポートの競合:
-
-ポートが既に使用されている場合は、`docker-compose-only-admin.yml` のポート番号を変更してください。
-
-データベース接続エラー:
-
-データベースの起動を待機してください。以下のコマンドでヘルスチェックを確認できます。
-
-```powershell
-docker compose -f docker-compose-only-admin.yml ps
-```
-
-コンテナの再ビルド:
-
-キャッシュをクリアして再ビルドする場合:
-
-```powershell
-docker compose -f docker-compose-only-admin.yml build --no-cache
-docker compose -f docker-compose-only-admin.yml up -d
-```
-
 ## オプションB: 外部API環境に接続して起動
 
 ### 起動
@@ -300,27 +277,3 @@ Django（navi_admin_web）:
 ### データの永続化
 
 データは外部APIサーバーで管理されます。
-
-### トラブルシューティング
-
-ポートの競合:
-
-ポートが既に使用されている場合は、`docker-compose-connect-other.yml` のポート番号を変更してください。
-
-データベース接続エラー:
-
-データベースの起動を待機してください。以下のコマンドでヘルスチェックを確認できます。
-
-```powershell
-docker compose -f docker-compose-connect-other.yml ps
-```
-
-コンテナの再ビルド:
-
-キャッシュをクリアして再ビルドする場合:
-
-```powershell
-docker compose -f docker-compose-connect-other.yml build --no-cache
-docker compose -f docker-compose-connect-other.yml up -d
-```
-
