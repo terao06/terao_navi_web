@@ -97,11 +97,11 @@ WSGI_APPLICATION = 'terao_navi_web.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'db_local',
-        'USER': 'navi_admin_user',
-        'PASSWORD': 'password',
-        'HOST': 'navi_admin_db',
-        'PORT': '3306',
+        'HOST': os.getenv('DB_HOST'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'PORT': os.getenv('DB_POST'),
         'OPTIONS': {
             'charset': 'utf8mb4',
         },
@@ -163,17 +163,17 @@ LOGOUT_REDIRECT_URL = '/logout/'
 
 # AWS S3 Settings (MinIO for local)
 import socket
-try:
-    # Docker環境ではホスト名をIPアドレスに解決
-    minio_host = os.getenv('MINIO_HOST', 'navi_admin_s3')
-    minio_ip = socket.gethostbyname(minio_host)
-    AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', f'http://{minio_ip}:9000')
-except socket.gaierror:
-    # ホスト名解決に失敗した場合はそのまま使用
-    AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', 'http://navi_admin_s3:9000')
-
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', 'minioadmin')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', 'minioadmin')
+# try:
+#     # Docker環境ではホスト名をIPアドレスに解決
+#     minio_host = os.getenv('MINIO_HOST', 'navi-api-s3')
+#     minio_ip = socket.gethostbyname(minio_host)
+#     AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', f'http://{minio_ip}:9000')
+# except socket.gaierror:
+#     # ホスト名解決に失敗した場合はそのまま使用
+#     AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', 'http://navi-admin-s3:9000')
+AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', 'http://navi-admin-s3:9000')
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', 'dummy')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', 'dummy123')
 AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', 'manuals')
 AWS_S3_USE_SSL = os.getenv('AWS_S3_USE_SSL', 'False') == 'True'
 AWS_S3_SIGNATURE_VERSION = 's3v4'

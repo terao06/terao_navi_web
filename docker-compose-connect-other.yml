@@ -1,0 +1,36 @@
+
+services:
+  navi_admin_web:
+    image: navi_admin_web:local
+    container_name: navi_admin_web
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: ./docker/local/Dockerfile
+    command: >
+      sh -c "
+        python manage.py runserver 0.0.0.0:8004
+      "
+    volumes:
+      - .:/app
+    ports:
+      - 8004:8004
+    environment:
+      - DJANGO_SETTINGS_MODULE=terao_navi_web.settings
+      - PYTHONUNBUFFERED=1
+      - DB_HOST=navi-api-db
+      - DB_NAME=db_local
+      - DB_USER=navi_admin_user
+      - DB_PASSWORD=password
+      - DB_POST=3306
+      - AWS_S3_ENDPOINT_URL=http://navi-api-s3:9000
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy123
+    networks:
+      - navi-api-network
+
+
+networks:
+  navi-api-network:
+    external: true
+    name: terao_navi_api_navi-api-network

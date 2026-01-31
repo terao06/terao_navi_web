@@ -1,7 +1,7 @@
 services:
-  navi_admin_db:
-    image: navi_admin_db:local
-    container_name: navi_admin_db
+  navi-admin-db:
+    image: navi-admin-db:local
+    container_name: navi-admin-db
     build:
       context: .
       dockerfile: ./local_setting/local_db/Dockerfile
@@ -21,11 +21,11 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - navi_admin_network
+      - navi-admin-network
 
-  navi_admin_web:
-    image: navi_admin_web:local
-    container_name: navi_admin_web
+  navi-admin-web:
+    image: navi-admin-web:local
+    container_name: navi-admin-web
     platform: linux/amd64
     build:
       context: .
@@ -33,7 +33,7 @@ services:
     command: >
       sh -c "
         echo 'Waiting for database...' &&
-        while ! nc -z navi_admin_db 3306; do
+        while ! nc -z navi-admin-db 3306; do
           sleep 1
         done &&
         echo 'Database is ready!' &&
@@ -46,16 +46,24 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=terao_navi_web.settings
       - PYTHONUNBUFFERED=1
+      - DB_HOST=navi-admin-db
+      - DB_NAME=db_local
+      - DB_USER=navi_admin_user
+      - DB_PASSWORD=password
+      - DB_POST=3306
+      - AWS_S3_ENDPOINT_URL=http://navi-admin-s3:9000
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
     depends_on:
-      navi_admin_db:
+      navi-admin-db:
         condition: service_healthy
     networks:
-      - navi_admin_network
+      - navi-admin-network
     restart: unless-stopped
   
-  navi_admin_s3:
+  navi-admin-s3:
     image: minio/minio
-    container_name: navi_admin_s3
+    container_name: navi-admin-s3
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -66,38 +74,38 @@ services:
       - MINIO_ROOT_PASSWORD=minioadmin
     command: server /data --console-address ":9001"
     networks:
-      - navi_admin_network
+      - navi-admin-network
     restart: always
 
-  minio_init:
+  minio-init:
     image: minio/mc
     depends_on:
-      - navi_admin_s3
+      - navi-admin-s3
     entrypoint: >
       sh -c "/init/create_bucket.sh"
     volumes:
       - ./local_setting/local_s3:/init
     networks:
-      - navi_admin_network
+      - navi-admin-network
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     ports:
       - "8013:80"
     environment:
-      PMA_HOST: navi_admin_db
+      PMA_HOST: navi-admin-db
       PMA_PORT: 3306
       PMA_USER: root
       PMA_PASSWORD: rootpassword
     networks:
-      - navi_admin_network
+      - navi-admin-network
     depends_on:
-      navi_admin_db:
+      navi-admin-db:
         condition: service_healthy
     restart: always
 
 networks:
-  navi_admin_network:
+  navi-admin-network:
     driver: bridge
 
 volumes:
-  minio_data:
+  minio-data:

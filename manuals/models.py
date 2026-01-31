@@ -14,7 +14,7 @@ class Manual(models.Model):
     application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='manuals')
     manual_name = models.CharField(max_length=200, verbose_name='マニュアル名')
     description = models.TextField(blank=True, null=True, verbose_name='説明')
-    file_path = models.CharField(max_length=500, verbose_name='ファイルパス')  # S3内のパス: manuals/application_id/manual_id.pdf
+    file_extension = models.CharField(max_length=500, verbose_name='ファイル拡張子')  # S3内のパス: manuals/application_id/manual_id.pdf
     file_size = models.BigIntegerField(verbose_name='ファイルサイズ(bytes)', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='作成日時')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新日時')

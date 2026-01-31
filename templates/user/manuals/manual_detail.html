@@ -208,7 +208,7 @@
         document.getElementById('zoom-level').textContent = zoomLevel;
         renderPage(pageNum);
     }).catch(function(error) {
-        console.error('PDFの読み込みに失敗しました:', error);
+        console.error('PDFの読み込みに失敗しました:', 'URL:', url, 'Error:', error);
         document.getElementById('pdf-container').innerHTML = 
             '<div class="alert alert-danger m-3">PDFの読み込みに失敗しました。</div>';
     });

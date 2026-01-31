@@ -6,6 +6,11 @@
 {% block content %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css"/>
 <style>
+    /* スクロールバーの出現/消失によるレイアウト揺れを抑える（対応ブラウザのみ） */
+    html {
+        scrollbar-gutter: stable;
+    }
+
     /* チャットウィジェットが確実に最前面に表示されるようにする */
     #terao-navi-chat,
     #terao-navi-chat *,
@@ -46,6 +51,30 @@
         border-color: #86b7fe;
         box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
     }
+
+    /* プレビュー背景（ユーザー指定URLのページをiframeで表示） */
+    #tagPreviewArea {
+        background-color: #fff;
+    }
+
+    #previewBackgroundFrame {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        border-radius: 5px;
+        z-index: 0;
+        background: #fff;
+    }
+
+    /* iframeより前面に表示 */
+    #tagPreviewArea > #terao-navi-chat,
+    #tagPreviewArea > #chatPreview {
+        position: relative;
+        z-index: 2;
+    }
 </style>
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -62,7 +91,7 @@
     {% endif %}
 
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <!-- 設定 -->
             <div class="card mb-3">
                 <div class="card-header">
@@ -87,6 +116,15 @@
                                 <div class="text-danger">{{ form.chat_color.errors }}</div>
                             {% endif %}
                             <small class="form-text text-muted ms-2">チャットボタンの色を設定します</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="previewBgUrl" class="form-label">プレビュー背景URL</label>
+                            <input id="previewBgUrl" type="url" inputmode="url" class="form-control" placeholder="https://example.com" />
+                            <div class="d-flex gap-2 mt-2">
+                                <button type="button" id="previewBgClear" class="btn btn-sm btn-outline-secondary">背景をクリア</button>
+                            </div>
+                            <small class="form-text text-muted">この画面のプレビュー欄にのみ反映されます。サイト側の設定（X-Frame-Options等）により表示できない場合があります。</small>
                         </div>
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-code-square"></i> タグを生成
@@ -114,7 +152,7 @@
             {% endif %}
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-8">
             <!-- プレビュー -->
             {% if generated_tag %}
             <div class="card" style="position: sticky; top: 20px; z-index: 1;">
@@ -122,7 +160,8 @@
                     <h5 class="mb-0">プレビュー</h5>
                 </div>
                 <div class="card-body">
-                    <div style="border: 1px dashed #dee2e6; padding: 20px; border-radius: 5px; background-color: #fff; min-height: 300px; position: relative; overflow: visible;">
+                    <div id="tagPreviewArea" style="border: 1px dashed #dee2e6; padding: 20px; border-radius: 5px; min-height: 300px; position: relative; overflow: visible;">
+                        <iframe id="previewBackgroundFrame" title="preview background" loading="lazy" referrerpolicy="no-referrer" scrolling="yes"></iframe>
                         <div id="terao-navi-chat"></div>
                         <div id="chatPreview" style="position: relative; z-index: 9999;"></div>
                     </div>
@@ -167,6 +206,104 @@ function copyToClipboard() {
 // 実際のチャットウィジェットをプレビュー表示
 document.addEventListener('DOMContentLoaded', function() {
     const previewContainer = document.getElementById('chatPreview');
+    const previewArea = document.getElementById('tagPreviewArea');
+    const previewBgUrl = document.getElementById('previewBgUrl');
+    const previewBgClear = document.getElementById('previewBgClear');
+    const previewBackgroundFrame = document.getElementById('previewBackgroundFrame');
+
+    const PREVIEW_BG_STORAGE_KEY = 'terao_navi_preview_bg_url';
+
+    function normalizePreviewUrl(rawUrl) {
+        const trimmed = (rawUrl || '').trim();
+        if (!trimmed) return '';
+
+        // スキーム省略時は https を補完
+        const candidate = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+        try {
+            const url = new URL(candidate);
+            if (url.protocol !== 'http:' && url.protocol !== 'https:') return '';
+            return url.toString();
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function applyPreviewBackgroundUrl(rawUrl) {
+        if (!previewArea || !previewBackgroundFrame) return;
+        const normalized = normalizePreviewUrl(rawUrl);
+        if (!normalized) {
+            previewBackgroundFrame.removeAttribute('src');
+            return;
+        }
+        previewBackgroundFrame.src = normalized;
+    }
+
+    function loadPreviewBackgroundFromStorage() {
+        try {
+            const saved = localStorage.getItem(PREVIEW_BG_STORAGE_KEY);
+            if (saved) {
+                if (previewBgUrl) previewBgUrl.value = saved;
+                applyPreviewBackgroundUrl(saved);
+            }
+        } catch (e) {
+            // localStorageが使えない環境でも動作は継続
+        }
+    }
+
+    function savePreviewBackgroundToStorage(url) {
+        try {
+            localStorage.setItem(PREVIEW_BG_STORAGE_KEY, url);
+        } catch (e) {
+            // 容量超過などの場合は保存を諦める（プレビュー表示はできる）
+        }
+    }
+
+    function clearPreviewBackground() {
+        applyPreviewBackgroundUrl('');
+        if (previewBgUrl) previewBgUrl.value = '';
+        try {
+            localStorage.removeItem(PREVIEW_BG_STORAGE_KEY);
+        } catch (e) {
+        }
+    }
+
+    if (previewArea) {
+        loadPreviewBackgroundFromStorage();
+    }
+
+    if (previewBgUrl) {
+        let debounceTimer = null;
+        const handleUrlChanged = function() {
+            const normalized = normalizePreviewUrl(previewBgUrl.value);
+            applyPreviewBackgroundUrl(previewBgUrl.value);
+            if (normalized) {
+                savePreviewBackgroundToStorage(normalized);
+            } else {
+                try {
+                    localStorage.removeItem(PREVIEW_BG_STORAGE_KEY);
+                } catch (e) {
+                }
+            }
+        };
+
+        previewBgUrl.addEventListener('input', function() {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(handleUrlChanged, 400);
+        });
+
+        previewBgUrl.addEventListener('change', function() {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            handleUrlChanged();
+        });
+    }
+
+    if (previewBgClear) {
+        previewBgClear.addEventListener('click', function() {
+            clearPreviewBackground();
+        });
+    }
+
     const companyId = '{{ company_id|escapejs }}';
     const chatTitle = '{{ chat_title|escapejs }}';
     const chatColor = '{{ chat_color|escapejs }}';

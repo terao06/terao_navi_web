@@ -40,7 +40,7 @@ def upload_file_to_s3(file, company_id, application_id, filename):
     
     Args:
         file: アップロードするファイルオブジェクト
-        company_id: 会社ID（後方互換性のため残すが使用しない）
+        company_id: 会社ID
         application_id: アプリケーションID
         filename: ファイル名
     
@@ -49,8 +49,8 @@ def upload_file_to_s3(file, company_id, application_id, filename):
     """
     ensure_bucket_exists()
     
-    # S3内のパスを生成: application_id/filename (バケット名がmanualsなので、パスにmanualsは不要)
-    s3_key = f"{application_id}/{filename}"
+    # S3内のパスを生成: company_id/application_id/filename
+    s3_key = f"{company_id}/{application_id}/{filename}"
     
     s3_client = get_s3_client()
     try:

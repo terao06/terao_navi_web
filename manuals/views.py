@@ -9,6 +9,11 @@ from .s3_utils import upload_file_to_s3, download_file_from_s3, delete_file_from
 import os
 
 
+def get_s3_key(manual):
+    """マニュアルのS3キーを生成"""
+    return f"{manual.application.company_id}/{manual.application.application_id}/{manual.manual_id}.{manual.file_extension}"
+
+
 def require_user_authentication(view_func):
     """一般ユーザー認証デコレーター"""
     def wrapper(request, *args, **kwargs):
@@ -80,20 +85,22 @@ def manual_create(request):
             application = form.cleaned_data['application']
             
             try:
-                # まず保存してmanual_idを取得
+                # ファイル拡張子を取得（例: "pdf"）
+                file_extension = pdf_file.name.split('.')[-1].lower()
+                manual.file_extension = file_extension
                 manual.file_size = pdf_file.size
+                
+                # まず保存してmanual_idを取得
                 manual.save()
                 
                 # manual_id.pdfとしてS3にアップロード
-                filename = f"{manual.manual_id}.pdf"
-                s3_key = upload_file_to_s3(
+                filename = f"{manual.manual_id}.{file_extension}"
+                upload_file_to_s3(
                     pdf_file.file,
                     application.company_id,
                     application.application_id,
                     filename
                 )
-                manual.file_path = s3_key
-                manual.save()
                 
                 messages.success(request, f'マニュアル「{manual.manual_name}」を作成しました。')
                 return redirect('manual_list')
@@ -136,22 +143,25 @@ def manual_edit(request, manual_id):
             if pdf_file:
                 try:
                     # 古いファイルを削除
-                    if manual.file_path:
-                        try:
-                            delete_file_from_s3(manual.file_path)
-                        except:
-                            pass  # 削除失敗しても続行
+                    old_s3_key = get_s3_key(manual)
+                    try:
+                        delete_file_from_s3(old_s3_key)
+                    except:
+                        pass  # 削除失敗しても続行
                     
-                    # manual_id.pdfとしてアップロード
-                    filename = f"{manual.manual_id}.pdf"
-                    s3_key = upload_file_to_s3(
+                    # ファイル拡張子を取得して更新
+                    file_extension = pdf_file.name.split('.')[-1].lower()
+                    manual.file_extension = file_extension
+                    manual.file_size = pdf_file.size
+                    
+                    # manual_id.{拡張子}としてアップロード
+                    filename = f"{manual.manual_id}.{file_extension}"
+                    upload_file_to_s3(
                         pdf_file.file,
                         application.company_id,
                         application.application_id,
                         filename
                     )
-                    manual.file_path = s3_key
-                    manual.file_size = pdf_file.size
                 except Exception as e:
                     messages.error(request, f'ファイルのアップロードに失敗しました: {str(e)}')
                     return render(request, 'user/manuals/manual_form.html', {
@@ -233,12 +243,14 @@ def manual_preview(request, manual_id):
     manual = get_object_or_404(Manual, manual_id=manual_id, application__company_id=current_user.company_id)
     
     try:
-        # S3からファイルを取得
-        file_content = download_file_from_s3(manual.file_path)
+        # S3キーを生成してファイルを取得
+        s3_key = get_s3_key(manual)
+        file_content = download_file_from_s3(s3_key)
         
         # PDFとして表示（ダウンロードではなくインライン表示）
+        filename = f"{manual.manual_id}.{manual.file_extension}"
         response = HttpResponse(file_content, content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename="{os.path.basename(manual.file_path)}"'
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
         response['X-Frame-Options'] = 'SAMEORIGIN'
         return response
     except Exception as e:
