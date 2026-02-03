@@ -81,3 +81,5 @@ docker-compose.override.yml
 ############################
 local_settings.py
 settings_local.py
+local_setting/local_app/llm_models/*
+!local_setting/local_app/llm_models/.gitkeep

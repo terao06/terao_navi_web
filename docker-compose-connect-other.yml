@@ -13,6 +13,7 @@ services:
       "
     volumes:
       - .:/app
+      - ./local_setting/local_app/llm_models:/models:ro
     ports:
       - 8004:8004
     environment:
@@ -26,6 +27,13 @@ services:
       - AWS_S3_ENDPOINT_URL=http://navi-api-s3:9000
       - AWS_ACCESS_KEY_ID=dummy
       - AWS_SECRET_ACCESS_KEY=dummy123
+      - VECTOR_PG_CONNECTION=postgresql+psycopg://vector_user:vector_password@vector-db:5432/vector_db
+      - VECTOR_EMBEDDINGS_PROVIDER=local
+      - HF_EMBEDDING_MODEL=/models/bge-m3
+      - HF_EMBEDDINGS_DEVICE=cpu
+      - OPENAI_API_KEY=
+      - OPENAI_EMBEDDING_MODEL=
+
     networks:
       - navi-api-network
 

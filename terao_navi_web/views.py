@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import logout, authenticate, login
 from django.contrib import messages
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import ensure_csrf_cookie
 from users.auth_backend import UserAuthBackend
 
 
@@ -29,6 +31,8 @@ def admin_redirect(request):
 
 # ========== Admin用（スーパーユーザー） ==========
 
+@never_cache
+@ensure_csrf_cookie
 def custom_login(request):
     """管理者ログイン（メールアドレスまたはユーザー名で認証）"""
     if request.method == 'POST':
@@ -66,6 +70,8 @@ def custom_logout(request):
 
 # ========== 一般ユーザー用 ==========
 
+@never_cache
+@ensure_csrf_cookie
 def user_login(request):
     """一般ユーザーログイン（メールアドレスまたはユーザー名で認証）"""
     if request.method == 'POST':

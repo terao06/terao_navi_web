@@ -41,6 +41,7 @@ services:
       "
     volumes:
       - .:/app
+      - ./local_setting/local_app/llm_models:/models:ro
     ports:
       - 8004:8004
     environment:
@@ -54,6 +55,12 @@ services:
       - AWS_S3_ENDPOINT_URL=http://navi-admin-s3:9000
       - AWS_ACCESS_KEY_ID=minioadmin
       - AWS_SECRET_ACCESS_KEY=minioadmin
+      - VECTOR_PG_CONNECTION=postgresql+psycopg://vector_user:vector_password@vector-admin-db:5432/vector_db
+      - VECTOR_EMBEDDINGS_PROVIDER=local
+      - HF_EMBEDDING_MODEL=/models/bge-m3
+      - HF_EMBEDDINGS_DEVICE=cpu
+      - OPENAI_API_KEY=
+      - OPENAI_EMBEDDING_MODEL=
     depends_on:
       navi-admin-db:
         condition: service_healthy
@@ -102,6 +109,36 @@ services:
       navi-admin-db:
         condition: service_healthy
     restart: always
+  
+  vector-admin-db:
+    image: pgvector/pgvector:pg16
+    container_name: vector-admin-db
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=vector_user
+      - POSTGRES_PASSWORD=vector_password
+      - POSTGRES_DB=vector_db
+    volumes:
+      - ./local_data/vector_db:/var/lib/postgresql/data
+      - ./local_setting/local_postgre/create_tables.sh:/docker-entrypoint-initdb.d/init.sh
+    networks:
+      - navi-admin-network
+  
+  vector-admin-db-admin:
+    image: dpage/pgadmin4
+    container_name: vector-admin-db-admin
+    ports:
+      - "8080:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    volumes:
+      - ./local_data/pgadmin:/var/lib/pgadmin
+    networks:
+      - navi-admin-network
+    depends_on:
+      - vector-admin-db
 
 networks:
   navi-admin-network:

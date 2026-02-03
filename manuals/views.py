@@ -3,10 +3,14 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpResponse
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import Manual
 from .forms import ManualForm
 from .s3_utils import upload_file_to_s3, download_file_from_s3, delete_file_from_s3, get_file_url
-import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_s3_key(manual):
@@ -63,6 +67,8 @@ def manual_list(request):
 
 
 @require_user_authentication
+@never_cache
+@ensure_csrf_cookie
 def manual_create(request):
     """マニュアル作成"""
     current_user = get_current_user(request)
@@ -76,6 +82,7 @@ def manual_create(request):
         return redirect('manual_list')
     
     if request.method == 'POST':
+        logger.info("マニュアル登録を開始します。")
         form = ManualForm(request.POST, request.FILES, current_user=current_user)
         if form.is_valid():
             manual = form.save(commit=False)
@@ -101,14 +108,30 @@ def manual_create(request):
                     application.application_id,
                     filename
                 )
-                
+                # ベクトルデータをPostgreSQL(PGVector)へ登録（設定されている場合のみ）
+                s3_key = f"{application.company_id}/{application.application_id}/{filename}"
+                try:
+                    from .vector_ingest import ingest_manual_to_vector_store
+
+                    ingest_manual_to_vector_store(
+                        manual_id=manual.manual_id,
+                        company_id=application.company_id,
+                        application_id=application.application_id,
+                        s3_key=s3_key,
+                        title=manual.manual_name,
+                    )
+                except Exception as e:
+                    logger.exception("ベクトル登録に失敗しました: %s", e)
+                    messages.warning(request, f'ベクトル登録に失敗しました（検索機能に影響する可能性があります）: {str(e)}')
+                logger.info("マニュアル登録が成功しました。")
                 messages.success(request, f'マニュアル「{manual.manual_name}」を作成しました。')
                 return redirect('manual_list')
             except Exception as e:
+                logger.error(f"ファイルのアップロードに失敗しました: {str(e)}")
                 messages.error(request, f'ファイルのアップロードに失敗しました: {str(e)}')
     else:
         form = ManualForm(current_user=current_user)
-    
+
     return render(request, 'user/manuals/manual_form.html', {
         'form': form,
         'title': 'マニュアル作成',
@@ -118,6 +141,8 @@ def manual_create(request):
 
 
 @require_user_authentication
+@never_cache
+@ensure_csrf_cookie
 def manual_edit(request, manual_id):
     """マニュアル編集"""
     current_user = get_current_user(request)
@@ -131,6 +156,11 @@ def manual_edit(request, manual_id):
         return redirect('manual_list')
     
     manual = get_object_or_404(Manual, manual_id=manual_id, application__company_id=current_user.company_id)
+
+    # 更新前のS3キー（=source）を保持（application変更があっても古いキーを消せるように）
+    old_company_id = manual.application.company_id
+    old_application_id = manual.application.application_id
+    old_file_extension = manual.file_extension
     
     if request.method == 'POST':
         form = ManualForm(request.POST, request.FILES, instance=manual, current_user=current_user)
@@ -142,12 +172,20 @@ def manual_edit(request, manual_id):
             pdf_file = form.cleaned_data.get('pdf_file')
             if pdf_file:
                 try:
-                    # 古いファイルを削除
-                    old_s3_key = get_s3_key(manual)
+                    # 古いファイル/ベクトルを削除（差し替え時に残骸が残らないように）
+                    old_s3_key = f"{old_company_id}/{old_application_id}/{manual.manual_id}.{old_file_extension}"
                     try:
                         delete_file_from_s3(old_s3_key)
                     except:
                         pass  # 削除失敗しても続行
+
+                    try:
+                        from .vector_ingest import delete_manual_from_vector_store
+
+                        delete_manual_from_vector_store(s3_key=old_s3_key)
+                    except Exception as e:
+                        logger.exception("ベクトル削除に失敗しました: %s", e)
+                        messages.warning(request, f'ベクトル削除に失敗しました（検索機能に影響する可能性があります）: {str(e)}')
                     
                     # ファイル拡張子を取得して更新
                     file_extension = pdf_file.name.split('.')[-1].lower()
@@ -162,6 +200,22 @@ def manual_edit(request, manual_id):
                         application.application_id,
                         filename
                     )
+                    # ベクトルデータをPostgreSQL(PGVector)へ登録（設定されている場合のみ）
+                    try:
+                        s3_key = f"{application.company_id}/{application.application_id}/{filename}"
+                        from .vector_ingest import ingest_manual_to_vector_store
+
+                        ingest_manual_to_vector_store(
+                            manual_id=manual.manual_id,
+                            company_id=application.company_id,
+                            application_id=application.application_id,
+                            s3_key=s3_key,
+                            title=manual.manual_name,
+                        )
+                    except Exception as e:
+                        logger.exception("ベクトル登録に失敗しました: %s", e)
+                        messages.warning(request, f'ベクトル登録に失敗しました（検索機能に影響する可能性があります）: {str(e)}')
+            
                 except Exception as e:
                     messages.error(request, f'ファイルのアップロードに失敗しました: {str(e)}')
                     return render(request, 'user/manuals/manual_form.html', {
@@ -186,6 +240,8 @@ def manual_edit(request, manual_id):
 
 
 @require_user_authentication
+@never_cache
+@ensure_csrf_cookie
 def manual_delete(request, manual_id):
     """マニュアル削除"""
     current_user = get_current_user(request)
@@ -202,6 +258,16 @@ def manual_delete(request, manual_id):
     
     if request.method == 'POST':
         manual_name = manual.manual_name
+
+        # ベクトルDB側も削除（設定されている場合のみ）
+        try:
+            s3_key = get_s3_key(manual)
+            from .vector_ingest import delete_manual_from_vector_store
+
+            delete_manual_from_vector_store(s3_key=s3_key)
+        except Exception as e:
+            logger.exception("ベクトル削除に失敗しました: %s", e)
+            messages.warning(request, f'ベクトル削除に失敗しました（検索機能に影響する可能性があります）: {str(e)}')
         
         # 論理削除（S3のファイルは削除しない）
         manual.delete()

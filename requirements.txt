@@ -1,3 +1,11 @@
 Django==4.2.27
 mysqlclient==2.2.7
 boto3==1.42.25
+langgraph==1.0.5
+langchain-community==0.4.1
+langchain-core==1.2.7
+langchain-openai==1.1.7
+langchain-postgres==0.0.16
+SQLAlchemy==2.0.45
+sentence-transformers==5.2.0
+unstructured[pdf]==0.18.27
